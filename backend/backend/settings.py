@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_celery_beat",
     "corsheaders",
     "rest_framework",
     "nested_admin",
@@ -84,12 +85,24 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
+'''DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
+}'''
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mydatabase',  # Your PostgreSQL database name
+        'USER': 'postgres',  # Your PostgreSQL username
+        'PASSWORD': '1234',  # Your PostgreSQL password
+        'HOST': 'localhost',  # Leave as 'localhost' if PostgreSQL is installed locally
+        'PORT': '5432',  # Default PostgreSQL port
+    }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -145,6 +158,15 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     FRONTEND_URL,
 ]
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-old-conversations': {
+        'task': 'chat.tasks.cleanup_old_conversations',
+        'schedule': 86400.0,  # Runs every 24 hours
+    },
+}
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
