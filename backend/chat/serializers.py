@@ -108,6 +108,74 @@ class VersionSerializer(serializers.ModelSerializer):
         return instance
 
 
+# class ConversationSerializer(serializers.ModelSerializer):
+#     versions = VersionSerializer(many=True)
+
+#     class Meta:
+#         model = Conversation
+#         fields = [
+#             "id",  # DB
+#             "title",  # required
+#             "active_version",
+#             "versions",  # optional
+#             "modified_at",  # DB, read-only
+#         ]
+
+#     def create(self, validated_data):
+#         versions_data = validated_data.pop("versions", [])
+#         conversation = Conversation.objects.create(**validated_data)
+#         for version_data in versions_data:
+#             version_serializer = VersionSerializer(data=version_data)
+#             if version_serializer.is_valid():
+#                 version_serializer.save(conversation=conversation)
+
+#         return conversation
+
+#     # def update(self, instance, validated_data):
+#     #     instance.title = validated_data.get("title", instance.title)
+#     #     active_version_id = validated_data.get("active_version", instance.active_version)
+#     #     if active_version_id is not None:
+#     #         active_version = Version.objects.get(id=active_version_id)
+#     #         instance.active_version = active_version
+#     #     instance.save()
+
+#     #     versions_data = validated_data.pop("versions", [])
+#     #     for version_data in versions_data:
+#     #         if "id" in version_data:
+#     #             version = Version.objects.get(id=version_data["id"], conversation=instance)
+#     #             version_serializer = VersionSerializer(version, data=version_data)
+#     #         else:
+#     #             version_serializer = VersionSerializer(data=version_data)
+#     #         if version_serializer.is_valid():
+#     #             version_serializer.save(conversation=instance)
+
+#     #     return instance
+#     def update(self, instance, validated_data):
+#         instance.title = validated_data.get("title", instance.title)
+    
+#         active_version_data = validated_data.get("active_version", None)
+#         if active_version_data:
+#             if isinstance(active_version_data, Version):
+#                 instance.active_version = active_version_data
+#             else:
+#                 instance.active_version = Version.objects.get(id=active_version_data)
+
+#         instance.save()
+
+#         versions_data = validated_data.pop("versions", [])
+#         for version_data in versions_data:
+#             if "id" in version_data:
+#                 version = Version.objects.get(id=version_data["id"], conversation=instance)
+#                 version_serializer = VersionSerializer(version, data=version_data)
+#                 if version_serializer.is_valid():
+#                     version_serializer.save()
+#             else:
+#                 version_serializer = VersionSerializer(data=version_data)
+#                 if version_serializer.is_valid():
+#                     version_serializer.save(conversation=instance)
+
+#         return instance
+
 class ConversationSerializer(serializers.ModelSerializer):
     versions = VersionSerializer(many=True)
 
@@ -122,31 +190,59 @@ class ConversationSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
+        # Separate the 'versions' data
         versions_data = validated_data.pop("versions", [])
+        # Create the Conversation instance
         conversation = Conversation.objects.create(**validated_data)
+        
+        # Create associated versions
         for version_data in versions_data:
             version_serializer = VersionSerializer(data=version_data)
             if version_serializer.is_valid():
                 version_serializer.save(conversation=conversation)
-
+            else:
+                raise serializers.ValidationError("Version data is invalid.")
+        
         return conversation
 
     def update(self, instance, validated_data):
+        # Update the title
         instance.title = validated_data.get("title", instance.title)
-        active_version_id = validated_data.get("active_version", instance.active_version)
-        if active_version_id is not None:
-            active_version = Version.objects.get(id=active_version_id)
-            instance.active_version = active_version
+        
+        # Handle active_version assignment
+        active_version_data = validated_data.get("active_version", None)
+        if active_version_data:
+            if isinstance(active_version_data, Version):
+                instance.active_version = active_version_data
+            else:
+                try:
+                    instance.active_version = Version.objects.get(id=active_version_data)
+                except Version.DoesNotExist:
+                    raise serializers.ValidationError(f"Version with ID {active_version_data} does not exist.")
+        
+        # Save the changes
         instance.save()
 
+        # Handle versions update or creation
         versions_data = validated_data.pop("versions", [])
         for version_data in versions_data:
             if "id" in version_data:
-                version = Version.objects.get(id=version_data["id"], conversation=instance)
-                version_serializer = VersionSerializer(version, data=version_data)
+                # Updating an existing version
+                try:
+                    version = Version.objects.get(id=version_data["id"], conversation=instance)
+                    version_serializer = VersionSerializer(version, data=version_data)
+                    if version_serializer.is_valid():
+                        version_serializer.save()
+                    else:
+                        raise serializers.ValidationError(f"Invalid version data for ID {version_data['id']}.")
+                except Version.DoesNotExist:
+                    raise serializers.ValidationError(f"Version with ID {version_data['id']} does not exist.")
             else:
+                # Creating a new version
                 version_serializer = VersionSerializer(data=version_data)
-            if version_serializer.is_valid():
-                version_serializer.save(conversation=instance)
-
+                if version_serializer.is_valid():
+                    version_serializer.save(conversation=instance)
+                else:
+                    raise serializers.ValidationError("New version data is invalid.")
+        
         return instance

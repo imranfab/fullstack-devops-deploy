@@ -41,16 +41,28 @@ const Chat = () => {
         const currMessages = currVersion.messages;
 
         dispatch(updateConversation(currVersion));
+    
+        const hasUserInput = Array.isArray(currMessages) && currMessages.some(message => message.role === UserRole);
 
-        const hasUserInput = currMessages.some(message => message.role === UserRole);
-        const lastMessage = currMessages[currMessages.length - 1];
+        //const hasUserInput = currMessages.some(message => message.role === UserRole);
+        //const lastMessage = currMessages[currMessages.length - 1];
+        const lastMessage = Array.isArray(currMessages) && currMessages.length > 0 ? currMessages[currMessages.length - 1] : null;
+
         const hasChatResponse = lastMessage && lastMessage.role === AssistantRole && lastMessage.content !== '';
         setCanRegenerate(hasUserInput && hasChatResponse && !isStreaming);
         setCanStop(isStreaming && hasChatResponse)
 
-        if (currMessages.length === 2 && !isStreaming && currVersion.title === MockTitle) {
+        // if (currMessages.length === 2 && !isStreaming && currVersion.title === MockTitle) {
+        //     generateTitle().catch(console.error);
+        // }
+        // if (Array.isArray(currMessages) && currMessages.length === 2 && !isStreaming && currVersion.title === MockTitle) {
+        //     generateTitle().catch(console.error);
+        // }
+        if (currMessages && Array.isArray(currMessages) && currMessages.length === 2 && !isStreaming && currVersion.title === MockTitle) {
             generateTitle().catch(console.error);
         }
+        
+        
     }, [currVersion, isStreaming]);
 
     useEffect(() => {
