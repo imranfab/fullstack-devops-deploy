@@ -10,6 +10,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^1.9.5",
     "axios": "^1.6.0",
+    "cookie": "^1.0.2",
     "js-cookie": "^3.0.5",
     "next": "latest",
     "openai": "^4.7.1",
@@ -17,7 +18,7 @@
     "react-dom": "18.2.0",
     "react-modal": "^3.16.1",
     "react-redux": "^8.1.2",
-    "react-syntax-highlighter": "^15.5.0",
+    "react-syntax-highlighter": "^15.6.1",
     "redux-thunk": "^2.4.2",
     "uuid": "^9.0.1"
   },

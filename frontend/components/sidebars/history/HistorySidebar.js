@@ -24,7 +24,9 @@ const HistorySidebar = () => {
     const [selectedId, setSelectedId] = useState(currConversation.id);
     const [editTitle, setEditTitle] = useState("");
 
-    const canStartNewConversation = currConversation.messages.length > 1 && !isStreaming;
+    //const canStartNewConversation = currConversation.messages.length > 1 && !isStreaming;
+    const canStartNewConversation = currConversation?.messages?.length > 1 && !isStreaming;
+
     const disabledClass = canStartNewConversation ? '' : styles.disabled;
 
     useEffect(() => {

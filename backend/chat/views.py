@@ -7,14 +7,17 @@ from rest_framework.response import Response
 from chat.models import Conversation, Message, Version
 from chat.serializers import ConversationSerializer, MessageSerializer, TitleSerializer, VersionSerializer
 from chat.utils.branching import make_branched_conversation
-
+#Importing modules
+import openai
+import os
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @api_view(["GET"])
 def chat_root_view(request):
     return Response({"message": "Chat works!"}, status=status.HTTP_200_OK)
 
 
-@login_required
+#@login_required
 @api_view(["GET"])
 def get_conversations(request):
     conversations = Conversation.objects.filter(user=request.user, deleted_at__isnull=True).order_by("-modified_at")
@@ -22,9 +25,16 @@ def get_conversations(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@login_required
+#@login_required
 @api_view(["GET"])
 def get_conversations_branched(request):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # TEMPORARY FOR TESTING ONLY
+    if request.user.is_anonymous:
+        request.user = User.objects.first()  # Or use filter(email="your@email.com").first()
+
     conversations = Conversation.objects.filter(user=request.user, deleted_at__isnull=True).order_by("-modified_at")
     conversations_serializer = ConversationSerializer(conversations, many=True)
     conversations_data = conversations_serializer.data
@@ -35,9 +45,16 @@ def get_conversations_branched(request):
     return Response(conversations_data, status=status.HTTP_200_OK)
 
 
-@login_required
+#@login_required
 @api_view(["GET"])
 def get_conversation_branched(request, pk):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # TEMPORARY FOR TESTING ONLY
+    if request.user.is_anonymous:
+        request.user = User.objects.first()  # Or use filter(email="your@email.com").first()
+
     try:
         conversation = Conversation.objects.get(user=request.user, pk=pk)
     except Conversation.DoesNotExist:
@@ -50,9 +67,17 @@ def get_conversation_branched(request, pk):
     return Response(conversation_data, status=status.HTTP_200_OK)
 
 
-@login_required
+#@login_required
 @api_view(["POST"])
 def add_conversation(request):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # TEMPORARY FOR TESTING ONLY
+    if request.user.is_anonymous:
+        request.user = User.objects.first()  # Or use filter(email="your@email.com").first()
+    print("Incoming request data :",request.data)
+
     try:
         conversation_data = {"title": request.data.get("title", "Mock title"), "user": request.user}
         conversation = Conversation.objects.create(**conversation_data)
@@ -77,9 +102,16 @@ def add_conversation(request):
         return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
+#@login_required
 @api_view(["GET", "PUT", "DELETE"])
 def conversation_manage(request, pk):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # TEMPORARY FOR TESTING ONLY
+    if request.user.is_anonymous:
+        request.user = User.objects.first()  # Or use filter(email="your@email.com").first()
+
     try:
         conversation = Conversation.objects.get(user=request.user, pk=pk)
     except Conversation.DoesNotExist:
@@ -101,9 +133,16 @@ def conversation_manage(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@login_required
+#@login_required
 @api_view(["PUT"])
 def conversation_change_title(request, pk):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # TEMPORARY FOR TESTING ONLY
+    if request.user.is_anonymous:
+        request.user = User.objects.first()  # Or use filter(email="your@email.com").first()
+
     try:
         conversation = Conversation.objects.get(user=request.user, pk=pk)
     except Conversation.DoesNotExist:
@@ -119,9 +158,16 @@ def conversation_change_title(request, pk):
     return Response({"detail": "Title not provided"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
+#@login_required
 @api_view(["PUT"])
 def conversation_soft_delete(request, pk):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # TEMPORARY FOR TESTING ONLY
+    if request.user.is_anonymous:
+        request.user = User.objects.first()  # Or use filter(email="your@email.com").first()
+
     try:
         conversation = Conversation.objects.get(user=request.user, pk=pk)
     except Conversation.DoesNotExist:
@@ -132,9 +178,16 @@ def conversation_soft_delete(request, pk):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@login_required
+#@login_required
 @api_view(["POST"])
 def conversation_add_message(request, pk):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # TEMPORARY FOR TESTING ONLY
+    if request.user.is_anonymous:
+        request.user = User.objects.first()  # Or use filter(email="your@email.com").first()
+
     try:
         conversation = Conversation.objects.get(user=request.user, pk=pk)
         version = conversation.active_version
@@ -158,9 +211,16 @@ def conversation_add_message(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
+#@login_required
 @api_view(["POST"])
 def conversation_add_version(request, pk):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    # TEMPORARY FOR TESTING ONLY
+    if request.user.is_anonymous:
+        request.user = User.objects.first()  # Or use filter(email="your@email.com").first()
+
     try:
         conversation = Conversation.objects.get(user=request.user, pk=pk)
         version = conversation.active_version
@@ -194,7 +254,7 @@ def conversation_add_version(request, pk):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-@login_required
+#@login_required
 @api_view(["PUT"])
 def conversation_switch_version(request, pk, version_id):
     try:
@@ -211,7 +271,7 @@ def conversation_switch_version(request, pk, version_id):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@login_required
+#@login_required
 @api_view(["POST"])
 def version_add_message(request, pk):
     try:

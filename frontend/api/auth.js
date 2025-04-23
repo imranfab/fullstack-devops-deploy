@@ -32,7 +32,8 @@ export const postLogin = async ({email, password}) => {
             {
                 email,
                 password
-            });
+                
+            },{withCredentials: true});
 
         if (response.status === 200) {
             return {
@@ -120,46 +121,53 @@ export const postRegister = async ({email, password}) => {
 };
 
 
+// export async function getServerSidePropsAuthHelper(context) {
+//     let isAuthenticated = false;
+
+//     const session = context.req.cookies.sessionid || null;
+//     const currUser = context.req.cookies.user || null;
+
+//     if (!currUser) {
+//         return {
+//             redirect: {
+//                 destination: '/login',
+//                 permanent: false,
+//             },
+//         };
+//     }
+
+
+//     if (session) {
+//         const response = (await axiosInstance.get(`/auth/verify_session`,
+//             {
+//                 headers: {
+//                     'Cookie': `sessionid=${session}`,
+//                 }
+//             })).data;
+
+//         isAuthenticated = response.data;
+//     }
+
+//     if (!isAuthenticated) {
+//         console.log('User is not authenticated, redirecting to login page.');
+//         return {
+//             redirect: {
+//                 destination: '/login',
+//                 permanent: false,
+//             },
+//         };
+//     }
+
+//     return {
+//         props: {
+//             isAuthenticated:true,
+//         },
+//     };
+// }
 export async function getServerSidePropsAuthHelper(context) {
-    let isAuthenticated = false;
-
-    const session = context.req.cookies.sessionid || null;
-    const currUser = context.req.cookies.user || null;
-
-    if (!currUser) {
-        return {
-            redirect: {
-                destination: '/login',
-                permanent: false,
-            },
-        };
-    }
-
-
-    if (session) {
-        const response = (await axiosInstance.get(`/auth/verify_session`,
-            {
-                headers: {
-                    'Cookie': `sessionid=${session}`,
-                }
-            })).data;
-
-        isAuthenticated = response.data;
-    }
-
-    if (!isAuthenticated) {
-        console.log('User is not authenticated, redirecting to login page.');
-        return {
-            redirect: {
-                destination: '/login',
-                permanent: false,
-            },
-        };
-    }
-
     return {
         props: {
-            isAuthenticated,
+            isAuthenticated: true,  // Always assume user is logged in
         },
     };
 }
