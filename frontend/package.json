@@ -17,7 +17,7 @@
     "react-dom": "18.2.0",
     "react-modal": "^3.16.1",
     "react-redux": "^8.1.2",
-    "react-syntax-highlighter": "^15.5.0",
+    "react-syntax-highlighter": "^12.2.1",
     "redux-thunk": "^2.4.2",
     "uuid": "^9.0.1"
   },

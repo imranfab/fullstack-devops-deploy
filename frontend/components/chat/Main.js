@@ -42,16 +42,16 @@ const Chat = () => {
 
         dispatch(updateConversation(currVersion));
 
-        const hasUserInput = currMessages.some(message => message.role === UserRole);
-        const lastMessage = currMessages[currMessages.length - 1];
+        const hasUserInput = (currMessages || []).some(message => message.role === UserRole);
+        const lastMessage = (currMessages && currMessages.length > 0) ? currMessages[currMessages.length - 1] : null;
         const hasChatResponse = lastMessage && lastMessage.role === AssistantRole && lastMessage.content !== '';
         setCanRegenerate(hasUserInput && hasChatResponse && !isStreaming);
-        setCanStop(isStreaming && hasChatResponse)
-
-        if (currMessages.length === 2 && !isStreaming && currVersion.title === MockTitle) {
+        setCanStop(isStreaming && hasChatResponse);
+        
+        if (currMessages && currMessages.length === 2 && !isStreaming && currVersion.title === MockTitle) {
             generateTitle().catch(console.error);
-        }
-    }, [currVersion, isStreaming]);
+        
+        }}, [currVersion, isStreaming]);
 
     useEffect(() => {
         console.log('conversation on useEffect end isStreaming', currVersion);
@@ -260,19 +260,25 @@ const Chat = () => {
     };
 
     const addMessageToConversation = (message, role, hidden = false) => {
-        if (currVersion.title === MockTitle)
-            return Promise.resolve();
-        const newMessage = {role: role, content: message};
-        // if this is first user's message then hidden = true
+        // 🚫 Skip the API call if the conversation doesn't exist yet
+        if (currVersion.conversation_id === "mock id") {
+            return Promise.resolve(); // Do nothing silently
+        }
+    
+        const newMessage = { role: role, content: message };
+    
+        // Automatically hide the first user message in a new conversation
         if (role === UserRole && currVersion.messages.length === 2) {
             hidden = true;
         }
+    
         return dispatch(addConversationMessageThunk({
             conversationId: currVersion.conversation_id,
             message: newMessage,
             hidden: hidden
         }));
-    }
+    };
+    
 
     const addVersionToConversation = async (rootMessageId = null) => {
         if (currVersion.title === MockTitle)

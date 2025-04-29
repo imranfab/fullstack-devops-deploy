@@ -3,7 +3,7 @@ import {axiosInstance} from "./axios";
 
 export const getCsrfToken = async () => {
     try {
-        const response = await axiosInstance.get(`/auth/csrf_token/`);
+        const response = await axiosInstance.get(`/auth/csrf_token/`,{withCredentials: true});
 
         if (response.status === 200) {
             const responseData = response.data;
@@ -32,11 +32,11 @@ export const postLogin = async ({email, password}) => {
             {
                 email,
                 password
-            });
+            },{withCredentials: true});
 
         if (response.status === 200) {
             return {
-                data: 'ok',
+                data:'ok',
                 ok: true,
             };
         } else {
@@ -66,7 +66,7 @@ export const postLogout = async (csrfToken) => {
     console.log('postLogout', csrfToken);
     try {
         const response = await axiosInstance.post(`/auth/logout/`,
-            {}
+            {},{ withCredentials: true }
         );
 
         if (response.status === 200) {
@@ -120,46 +120,53 @@ export const postRegister = async ({email, password}) => {
 };
 
 
+// export async function getServerSidePropsAuthHelper(context) {
+//     let isAuthenticated = false;
+
+//     const session = context.req.cookies.sessionid || null;
+//     const currUser = context.req.cookies.user || null;
+
+//     if (!currUser) {
+//         return {
+//             redirect: {
+//                 destination: '/login',
+//                 permanent: false,
+//             },
+//         };
+//     }
+
+
+//     if (session) {
+//         const response = (await axiosInstance.get(`/auth/verify_session`,
+//             {
+//                 headers: {
+//                     'Cookie': `sessionid=${session}`,
+//                 }
+//             })).data;
+
+//         isAuthenticated = response.data;
+//     }
+
+//     if (!isAuthenticated) {
+//         console.log('User is not authenticated, redirecting to login page.');
+//         return {
+//             redirect: {
+//                 destination: '/login',
+//                 permanent: false,
+//             },
+//         };
+//     }
+
+//     return {
+//         props: {
+//             isAuthenticated,
+//         },
+//     };
+// }
 export async function getServerSidePropsAuthHelper(context) {
-    let isAuthenticated = false;
-
-    const session = context.req.cookies.sessionid || null;
-    const currUser = context.req.cookies.user || null;
-
-    if (!currUser) {
-        return {
-            redirect: {
-                destination: '/login',
-                permanent: false,
-            },
-        };
-    }
-
-
-    if (session) {
-        const response = (await axiosInstance.get(`/auth/verify_session`,
-            {
-                headers: {
-                    'Cookie': `sessionid=${session}`,
-                }
-            })).data;
-
-        isAuthenticated = response.data;
-    }
-
-    if (!isAuthenticated) {
-        console.log('User is not authenticated, redirecting to login page.');
-        return {
-            redirect: {
-                destination: '/login',
-                permanent: false,
-            },
-        };
-    }
-
     return {
         props: {
-            isAuthenticated,
+            isAuthenticated: true,  // Always assume user is logged in
         },
     };
 }

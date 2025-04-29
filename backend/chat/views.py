@@ -1,8 +1,9 @@
-from django.contrib.auth.decorators import login_required
+from authentication.models import CustomUser
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import serializers
 
 from chat.models import Conversation, Message, Version
 from chat.serializers import ConversationSerializer, MessageSerializer, TitleSerializer, VersionSerializer
@@ -14,7 +15,7 @@ def chat_root_view(request):
     return Response({"message": "Chat works!"}, status=status.HTTP_200_OK)
 
 
-@login_required
+
 @api_view(["GET"])
 def get_conversations(request):
     conversations = Conversation.objects.filter(user=request.user, deleted_at__isnull=True).order_by("-modified_at")
@@ -22,10 +23,12 @@ def get_conversations(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@login_required
+
 @api_view(["GET"])
 def get_conversations_branched(request):
-    conversations = Conversation.objects.filter(user=request.user, deleted_at__isnull=True).order_by("-modified_at")
+    dummy_user = CustomUser.objects.first()
+
+    conversations = Conversation.objects.filter(user=dummy_user, deleted_at__isnull=True).order_by("-modified_at")
     conversations_serializer = ConversationSerializer(conversations, many=True)
     conversations_data = conversations_serializer.data
 
@@ -35,22 +38,23 @@ def get_conversations_branched(request):
     return Response(conversations_data, status=status.HTTP_200_OK)
 
 
-@login_required
+
 @api_view(["GET"])
 def get_conversation_branched(request, pk):
     try:
-        conversation = Conversation.objects.get(user=request.user, pk=pk)
+        dummy_user = CustomUser.objects.first()
+        conversation = Conversation.objects.get(user=dummy_user, pk=pk)
     except Conversation.DoesNotExist:
         return Response({"detail": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
 
     conversation_serializer = ConversationSerializer(conversation)
     conversation_data = conversation_serializer.data
-    make_branched_conversation(conversation_data)
+    
 
     return Response(conversation_data, status=status.HTTP_200_OK)
 
 
-@login_required
+
 @api_view(["POST"])
 def add_conversation(request):
     try:
@@ -77,11 +81,13 @@ def add_conversation(request):
         return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
+
 @api_view(["GET", "PUT", "DELETE"])
 def conversation_manage(request, pk):
     try:
-        conversation = Conversation.objects.get(user=request.user, pk=pk)
+        dummy_user = CustomUser.objects.first()
+        conversation = Conversation.objects.get(user=dummy_user, pk=pk)
+
     except Conversation.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -101,11 +107,12 @@ def conversation_manage(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@login_required
+
 @api_view(["PUT"])
 def conversation_change_title(request, pk):
     try:
-        conversation = Conversation.objects.get(user=request.user, pk=pk)
+        dummy_user = CustomUser.objects.first()
+        conversation = Conversation.objects.get(user=dummy_user, pk=pk)        
     except Conversation.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -119,11 +126,13 @@ def conversation_change_title(request, pk):
     return Response({"detail": "Title not provided"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
+
 @api_view(["PUT"])
 def conversation_soft_delete(request, pk):
     try:
-        conversation = Conversation.objects.get(user=request.user, pk=pk)
+        dummy_user = CustomUser.objects.first()
+        conversation = Conversation.objects.get(user=dummy_user, pk=pk)
+
     except Conversation.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -132,11 +141,13 @@ def conversation_soft_delete(request, pk):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@login_required
+
 @api_view(["POST"])
 def conversation_add_message(request, pk):
     try:
-        conversation = Conversation.objects.get(user=request.user, pk=pk)
+        dummy_user = CustomUser.objects.first()
+        conversation = Conversation.objects.get(user=dummy_user, pk=pk)
+
         version = conversation.active_version
     except Conversation.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -158,11 +169,13 @@ def conversation_add_message(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required
+
 @api_view(["POST"])
 def conversation_add_version(request, pk):
     try:
-        conversation = Conversation.objects.get(user=request.user, pk=pk)
+        dummy_user = CustomUser.objects.first()
+        conversation = Conversation.objects.get(user=dummy_user, pk=pk)
+
         version = conversation.active_version
         root_message_id = request.data.get("root_message_id")
         root_message = Message.objects.get(pk=root_message_id)
@@ -194,7 +207,7 @@ def conversation_add_version(request, pk):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-@login_required
+
 @api_view(["PUT"])
 def conversation_switch_version(request, pk, version_id):
     try:
@@ -211,7 +224,7 @@ def conversation_switch_version(request, pk, version_id):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@login_required
+
 @api_view(["POST"])
 def version_add_message(request, pk):
     try:

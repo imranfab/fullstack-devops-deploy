@@ -3,7 +3,7 @@ import {store} from "../redux/store";
 import {backendApiBaseUrl} from "../config";
 
 export const axiosInstance = axios.create({
-  baseURL: `${backendApiBaseUrl}`,
+  baseURL: "http://localhost:8000",
   withCredentials: true,
 });
 
