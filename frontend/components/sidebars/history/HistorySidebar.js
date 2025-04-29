@@ -8,6 +8,7 @@ import {
     changeConversationTitleThunk,
     deleteConversationThunk,
     fetchConversationsThunk,
+    getConversationBranchedThunk,
 } from "../../../redux/conversations";
 import HistoryItem from "./HistoryItem";
 import {DeleteModal, EditModal} from "./Modals";
@@ -24,7 +25,7 @@ const HistorySidebar = () => {
     const [selectedId, setSelectedId] = useState(currConversation.id);
     const [editTitle, setEditTitle] = useState("");
 
-    const canStartNewConversation = currConversation.messages.length > 1 && !isStreaming;
+    const canStartNewConversation = (currConversation?.messages?.length || 0) > 1 && !isStreaming;
     const disabledClass = canStartNewConversation ? '' : styles.disabled;
 
     useEffect(() => {
@@ -35,7 +36,7 @@ const HistorySidebar = () => {
         const currentTitle = allConversations.find(c => c.id === conversationId).title;
         setEditTitle(currentTitle);
         setIsEditModalOpen(true);
-    }
+    };
 
     const handleCloseEditModal = (newTitle) => {
         setIsEditModalOpen(false);
@@ -43,39 +44,59 @@ const HistorySidebar = () => {
             dispatch(changeConversationTitleThunk({id: selectedId, newTitle}));
             setEditTitle('');
         }
-    }
+    };
 
     const handleOpenDeleteModal = (conversationId) => {
         setSelectedId(conversationId);
         setIsDeleteModalOpen(true);
-    }
+    };
 
     const handleDeleteConversation = () => {
         dispatch(deleteConversationThunk({id: selectedId}));
         setIsDeleteModalOpen(false);
         dispatch(startNewConversation());
-    }
+    };
 
     const handleCloseDeleteModal = () => {
         setIsDeleteModalOpen(false);
-    }
+    };
 
     const handleNewConversation = () => {
         dispatch(setActiveConversation(null));
         dispatch(startNewConversation());
         setSelectedId(MockId);
-    }
-
-    const handleSelectConversation = (conversationId) => {
-        const selectedConversation = allConversations.find(c => c.id === conversationId);
-        if (selectedConversation) {
-            const latestVersion = selectedConversation.versions.find(v => v.active);
-            dispatch(setActiveConversation(selectedConversation.id));
-            dispatch(setConversation({...latestVersion, title: selectedConversation.title}));
-            setSelectedId(selectedConversation.id);
-        }
     };
 
+    const handleSelectConversation = async (conversationId) => {
+        try {
+            const actionResult = await dispatch(getConversationBranchedThunk({ conversationId }));
+            const conversationData = actionResult.payload;
+    
+            if (conversationData) {
+                const activeVersion = conversationData.versions?.find(v => v.active);
+    
+                if (!activeVersion) {
+                    console.error('No active version found for conversation', conversationId);
+                    return; 
+                }
+                dispatch(setConversation({
+                    id: conversationData.id,
+                    conversation_id: conversationData.id,
+                    title: conversationData.title,
+                    messages: activeVersion.messages || [],
+                    root_message: activeVersion.root_message,
+                    active: true,
+                    parent_version: activeVersion.parent_version,
+                }));
+    
+                dispatch(setActiveConversation(conversationId));
+                setSelectedId(conversationId);
+            }
+        } catch (error) {
+            console.error('Failed to load conversation:', error);
+        }
+    };
+    
 
     const navElements = useCallback(() => {
         return (
@@ -91,16 +112,18 @@ const HistorySidebar = () => {
 
                 <div className={styles.historyContainer}>
                     <ul>
-                        {allConversations.slice(0).sort((a, b) => new Date(b.modified_at) - new Date(a.modified_at)).map((conversation) => (
-                            <HistoryItem
-                                key={conversation.active_version}
-                                conversation={conversation}
-                                handleSelectConversation={handleSelectConversation}
-                                handleOpenEditModal={handleOpenEditModal}
-                                handleOpenDeleteModal={handleOpenDeleteModal}
-                                selectedId={selectedId}
-                            />
-                        ))}
+                        {allConversations.slice(0)
+                            .sort((a, b) => new Date(b.modified_at) - new Date(a.modified_at))
+                            .map((conversation) => (
+                                <HistoryItem
+                                    key={conversation.id}    
+                                    conversation={conversation}
+                                    handleSelectConversation={handleSelectConversation}
+                                    handleOpenEditModal={handleOpenEditModal}
+                                    handleOpenDeleteModal={handleOpenDeleteModal}
+                                    selectedId={selectedId}
+                                />
+                            ))}
                     </ul>
                     <EditModal
                         isOpen={isEditModalOpen}
@@ -122,6 +145,6 @@ const HistorySidebar = () => {
     return (
         <Sidebar navElements={navElements} description={description} width={"250px"}/>
     );
-}
+};
 
 export default HistorySidebar;

@@ -36,6 +36,7 @@ def login_view(request):
     user = authenticate(request, email=email, password=password)
     if user is not None:
         login(request, user)
+        request.session.save()
         response = JsonResponse({"data": "Login successful"})
 
         # Set session cookie manually

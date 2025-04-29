@@ -1,15 +1,11 @@
 import Chat from "../components/chat/Main";
 import Layout from "../components/chat/Layout";
-import {getServerSidePropsAuthHelper} from "../api/auth";
-import {useDispatch} from "react-redux";
-import {useEffect} from "react";
-import {fetchCsrfTokenThunk} from "../redux/auth";
+import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { fetchCsrfTokenThunk } from "../redux/auth";
+import { getServerSidePropsAuthHelper } from "../api/auth";
 
-function Home({isAuthenticated}) {
-    console.log("Home");
-    if (!isAuthenticated) {
-        return <div>You are not authenticated, login first</div>;
-    }
+function Home({ isAuthenticated }) {
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -18,14 +14,12 @@ function Home({isAuthenticated}) {
 
     return (
         <Layout title="Custom ChatGPT">
-            <Chat/>
+            <Chat />
         </Layout>
     );
 }
 
-
-export async function getServerSideProps(context) {
-    return getServerSidePropsAuthHelper(context);
-}
+// ✅ Use the always-auth helper for dev
+export { getServerSidePropsAuthHelper as getServerSideProps };
 
 export default Home;

@@ -6,8 +6,7 @@ from chat.models import Conversation, Message, Role, Version
 
 
 def should_serialize(validated_data, field_name) -> bool:
-    if validated_data.get(field_name) is not None:
-        return True
+    return validated_data.get(field_name) is not None
 
 
 class TitleSerializer(serializers.Serializer):
@@ -24,21 +23,14 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = [
-            "id",  # DB
-            "content",
-            "role",  # required
-            "created_at",  # DB, read-only
-        ]
+        fields = ["id", "content", "role", "created_at"]
         read_only_fields = ["id", "created_at", "version"]
 
     def create(self, validated_data):
-        message = Message.objects.create(**validated_data)
-        return message
+        return Message.objects.create(**validated_data)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation["versions"] = []  # add versions field
         return representation
 
 
@@ -52,12 +44,12 @@ class VersionSerializer(serializers.ModelSerializer):
         model = Version
         fields = [
             "id",
-            "conversation_id",  # DB
+            "conversation_id",
             "root_message",
             "messages",
             "active",
-            "created_at",  # DB, read-only
-            "parent_version",  # optional
+            "created_at",
+            "parent_version",
         ]
         read_only_fields = ["id", "conversation"]
 
@@ -72,17 +64,13 @@ class VersionSerializer(serializers.ModelSerializer):
         return timezone.localtime(obj.root_message.created_at)
 
     def create(self, validated_data):
-        messages_data = validated_data.pop("messages")
+        messages_data = validated_data.pop("messages", [])
         version = Version.objects.create(**validated_data)
         for message_data in messages_data:
             Message.objects.create(version=version, **message_data)
-
         return version
 
     def update(self, instance, validated_data):
-        instance.conversation = validated_data.get("conversation", instance.conversation)
-        instance.parent_version = validated_data.get("parent_version", instance.parent_version)
-        instance.root_message = validated_data.get("root_message", instance.root_message)
         if not any(
             [
                 should_serialize(validated_data, "conversation"),
@@ -93,15 +81,22 @@ class VersionSerializer(serializers.ModelSerializer):
             raise ValidationError(
                 "At least one of the following fields must be provided: conversation, parent_version, root_message"
             )
+
+        instance.conversation = validated_data.get("conversation", instance.conversation)
+        instance.parent_version = validated_data.get("parent_version", instance.parent_version)
+        instance.root_message = validated_data.get("root_message", instance.root_message)
         instance.save()
 
         messages_data = validated_data.pop("messages", [])
         for message_data in messages_data:
             if "id" in message_data:
-                message = Message.objects.get(id=message_data["id"], version=instance)
-                message.content = message_data.get("content", message.content)
-                message.role = message_data.get("role", message.role)
-                message.save()
+                try:
+                    message = Message.objects.get(id=message_data["id"], version=instance)
+                    message.content = message_data.get("content", message.content)
+                    message.role = message_data.get("role", message.role)
+                    message.save()
+                except Message.DoesNotExist:
+                    raise ValidationError(f"Message with ID {message_data['id']} not found for this version.")
             else:
                 Message.objects.create(version=instance, **message_data)
 
@@ -114,11 +109,12 @@ class ConversationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Conversation
         fields = [
-            "id",  # DB
-            "title",  # required
+            "id",
+            "title",
             "active_version",
-            "versions",  # optional
-            "modified_at",  # DB, read-only
+            "versions",
+            "modified_at",
+            "summary",
         ]
 
     def create(self, validated_data):
@@ -126,27 +122,35 @@ class ConversationSerializer(serializers.ModelSerializer):
         conversation = Conversation.objects.create(**validated_data)
         for version_data in versions_data:
             version_serializer = VersionSerializer(data=version_data)
-            if version_serializer.is_valid():
-                version_serializer.save(conversation=conversation)
-
+            version_serializer.is_valid(raise_exception=True)
+            version_serializer.save(conversation=conversation)
         return conversation
 
     def update(self, instance, validated_data):
         instance.title = validated_data.get("title", instance.title)
-        active_version_id = validated_data.get("active_version", instance.active_version)
-        if active_version_id is not None:
-            active_version = Version.objects.get(id=active_version_id)
-            instance.active_version = active_version
+
+        active_version_id = validated_data.get("active_version")
+        if active_version_id:
+            try:
+                active_version = Version.objects.get(id=active_version_id)
+                instance.active_version = active_version
+            except Version.DoesNotExist:
+                raise ValidationError(f"Active version with ID {active_version_id} not found.")
+
         instance.save()
 
         versions_data = validated_data.pop("versions", [])
         for version_data in versions_data:
             if "id" in version_data:
-                version = Version.objects.get(id=version_data["id"], conversation=instance)
-                version_serializer = VersionSerializer(version, data=version_data)
+                try:
+                    version = Version.objects.get(id=version_data["id"], conversation=instance)
+                    version_serializer = VersionSerializer(version, data=version_data)
+                except Version.DoesNotExist:
+                    raise ValidationError(f"Version with ID {version_data['id']} not found for this conversation.")
             else:
                 version_serializer = VersionSerializer(data=version_data)
-            if version_serializer.is_valid():
-                version_serializer.save(conversation=instance)
+
+            version_serializer.is_valid(raise_exception=True)
+            version_serializer.save(conversation=instance)
 
         return instance

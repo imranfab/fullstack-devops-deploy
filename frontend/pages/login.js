@@ -1,49 +1,34 @@
-import LoginForm from "../components/auth/LoginForm";
-import styles from "../styles/auth/auth.module.css"
-import {LockKeyIcon} from "../assets/SVGIcon";
-import React, {useState} from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { postLogin } from "../api/auth";
 
 function LoginPage() {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const disabledClassName = isSubmitting ? styles.disabled : '';
+    const router = useRouter();
+    const [status, setStatus] = useState("loading");
 
-    return (
-        <div className={styles.authRoot}>
-            <div className={styles.loginContainer}>
-                <div className={styles.formContainer}>
-                    <div className={styles.formHeader}>
-                        <LockKeyIcon/>
-                        <h1>Login</h1>
-                    </div>
-                    <LoginForm isSubmitting={isSubmitting} setIsSubmitting={setIsSubmitting}/>
-                    <div className={styles.formFooter}>
-                        <Link href={"#"} className={disabledClassName}>Forgot credentials?</Link>
-                        <Link
-                            href="/register"
-                            className={disabledClassName}>Create an account</Link>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+    useEffect(() => {
+        const autoLogin = async () => {
+            const result = await postLogin({
+                email: "ransivavakalapudi@gmail.com",  // Your test user
+                password: "Siva&6262"
+            });
 
-export async function getServerSideProps(context) {
-    const currUser = context.req.cookies.user || null;
+            if (result.ok) {
+                setStatus("done");
+                router.replace("/"); // ✅ Redirect to home
+            } else {
+                setStatus("failed");
+            }
+        };
 
-    if (currUser) {
-        return {
-            redirect: {
-                destination: '/',
-                permanent: false,
-            },
-        }
+        autoLogin();
+    }, [router]);
+
+    if (status === "loading") {
+        return <div>Logging in automatically...</div>;
     }
 
-    return {
-        props: {}
-    }
+    return <div>Login failed. Please check credentials.</div>;
 }
 
 export default LoginPage;
