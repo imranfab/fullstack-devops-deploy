@@ -15,6 +15,8 @@ class Role(models.Model):
 class Conversation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100, blank=False, null=False, default="Mock title")
+    topic = models.CharField(max_length=100, null=True, blank=True)
+    summary = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     active_version = models.ForeignKey(
