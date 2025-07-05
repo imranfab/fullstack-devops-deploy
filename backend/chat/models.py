@@ -5,6 +5,7 @@ from django.db import models
 from authentication.models import CustomUser
 
 
+
 class Role(models.Model):
     name = models.CharField(max_length=20, blank=False, null=False, default="user")
 
@@ -22,6 +23,7 @@ class Conversation(models.Model):
     )
     deleted_at = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    summary = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.title
