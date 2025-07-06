@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, StreamingHttpResponse
-from rest_framework.decorators import api_view
-
+from rest_framework.decorators import api_view,permission_classes
+from rest_framework.permissions import IsAuthenticated
 from src.utils.gpt import get_conversation_answer, get_gpt_title, get_simple_answer
 
 
@@ -10,7 +10,7 @@ def gpt_root_view(request):
     return JsonResponse({"message": "GPT endpoint works!"})
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 @api_view(["POST"])
 def get_title(request):
     data = request.data
@@ -18,14 +18,14 @@ def get_title(request):
     return JsonResponse({"content": title})
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 @api_view(["POST"])
 def get_answer(request):
     data = request.data
     return StreamingHttpResponse(get_simple_answer(data["user_question"], stream=True), content_type="text/html")
 
 
-@login_required
+@permission_classes([IsAuthenticated])
 @api_view(["POST"])
 def get_conversation(request):
     data = request.data

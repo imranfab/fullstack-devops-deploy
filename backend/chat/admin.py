@@ -1,9 +1,23 @@
 from django.contrib import admin
 from django.utils import timezone
 from nested_admin.nested import NestedModelAdmin, NestedStackedInline, NestedTabularInline
+from django.utils.html import format_html
+from django.conf import settings
 
-from chat.models import Conversation, Message, Role, Version
+from chat.models import Conversation, Message, Role, Version, UploadedFile
 
+
+@admin.register(UploadedFile)
+class UploadedFileAdmin(admin.ModelAdmin):
+    list_display = ['file', 'conversation', 'uploaded_at', 'download_link']
+    list_filter = ['conversation']
+    search_fields = ['file', 'conversation__title']
+
+    def download_link(self, obj):
+        return format_html(
+            f"<a href='{settings.MEDIA_URL}{obj.file}' target='_blank'>Download</a>"
+        )
+    download_link.short_description = "Download"
 
 class RoleAdmin(NestedModelAdmin):
     list_display = ["id", "name"]

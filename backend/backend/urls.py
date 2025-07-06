@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework.decorators import api_view
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
 @api_view(["GET"])
@@ -16,5 +17,12 @@ urlpatterns = [
     path("chat/", include("chat.urls")),
     path("gpt/", include("gpt.urls")),
     path("auth/", include("authentication.urls")),
+    path("api/", include("chat.urls")),
     path("", root_view),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+    # JWT Auth Endpoints
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

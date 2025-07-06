@@ -3,11 +3,39 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from chat.models import Conversation, Message, Role, Version
+from .models import UploadedFile
 
 
 def should_serialize(validated_data, field_name) -> bool:
     if validated_data.get(field_name) is not None:
         return True
+
+
+class UploadedFileSerializer(serializers.ModelSerializer):
+    
+    file = serializers.SerializerMethodField()
+    class Meta:
+        model = UploadedFile
+        fields = ['id', 'file', 'uploaded_at', 'file_hash', 'conversation']
+        read_only_fields = ['file_hash']
+        
+    # def get_file(self, obj):
+    #     request = self.context.get('request')
+    #     if request:
+    #         return request.build_absolute_uri(obj.file.url)
+    #     return obj.file.url if obj.file else None
+    def get_file(self, obj):
+        request = self.context.get('request')
+        if not obj.file:
+            return None  
+        try:
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        except Exception:
+            return None
+
+
 
 
 class TitleSerializer(serializers.Serializer):
@@ -110,15 +138,18 @@ class VersionSerializer(serializers.ModelSerializer):
 
 class ConversationSerializer(serializers.ModelSerializer):
     versions = VersionSerializer(many=True)
-
+    files = UploadedFileSerializer(many=True, read_only=True)
+    
     class Meta:
         model = Conversation
         fields = [
             "id",  # DB
             "title",  # required
+            'created_at',
             "active_version",
             "versions",  # optional
             "modified_at",  # DB, read-only
+            'files'
         ]
 
     def create(self, validated_data):
