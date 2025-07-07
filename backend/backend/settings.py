@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "authentication",
     "chat",
     "gpt",
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -176,3 +177,9 @@ CELERY_TASK_SERIALIZER = 'json'
 
 # CELERY BEAT SETTINGS
 INSTALLED_APPS += ['django_celery_beat']
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 5,
+}

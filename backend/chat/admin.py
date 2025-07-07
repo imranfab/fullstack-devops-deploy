@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.utils import timezone
+from django.contrib import admin
 from nested_admin.nested import NestedModelAdmin, NestedStackedInline, NestedTabularInline
 
-from chat.models import Conversation, Message, Role, Version
+from chat.models import Conversation, Message, Role, Version , FileUpload
 
 
 class RoleAdmin(NestedModelAdmin):
@@ -48,21 +49,53 @@ class DeletedListFilter(admin.SimpleListFilter):
         return queryset
 
 
+# class ConversationAdmin(NestedModelAdmin):
+#     actions = ["undelete_selected", "soft_delete_selected"]
+#     inlines = [VersionInline]
+#     list_display = ("title", "id", "created_at", "modified_at", "deleted_at", "version_count", "is_deleted", "user","summary")
+#     list_filter = (DeletedListFilter,)
+#     ordering = ("-modified_at",)
+
+#     def undelete_selected(self, request, queryset):
+#         queryset.update(deleted_at=None)
+
+#     undelete_selected.short_description = "Undelete selected conversations"
+
+#     def soft_delete_selected(self, request, queryset):
+#         queryset.update(deleted_at=timezone.now())
+
+#     soft_delete_selected.short_description = "Soft delete selected conversations"
+
+#     def get_action_choices(self, request, **kwargs):
+#         choices = super().get_action_choices(request)
+#         for idx, choice in enumerate(choices):
+#             fn_name = choice[0]
+#             if fn_name == "delete_selected":
+#                 new_choice = (fn_name, "Hard delete selected conversations")
+#                 choices[idx] = new_choice
+#         return choices
+
+#     def is_deleted(self, obj):
+#         return obj.deleted_at is not None
+
+#     is_deleted.boolean = True
+#     is_deleted.short_description = "Deleted?"
+
 class ConversationAdmin(NestedModelAdmin):
     actions = ["undelete_selected", "soft_delete_selected"]
     inlines = [VersionInline]
-    list_display = ("title", "id", "created_at", "modified_at", "deleted_at", "version_count", "is_deleted", "user","summary")
-    list_filter = (DeletedListFilter,)
+    list_display = ("title", "id", "created_at", "modified_at", "deleted_at", "version_count", "is_deleted", "user", "summary")
+    list_filter = (DeletedListFilter, 'created_at', 'user')  # ✅ added date/user filters
+    search_fields = ('title', 'summary', 'user__username')   # ✅ added search bar
+    list_per_page = 10                                       # ✅ enables pagination
     ordering = ("-modified_at",)
 
     def undelete_selected(self, request, queryset):
         queryset.update(deleted_at=None)
-
     undelete_selected.short_description = "Undelete selected conversations"
 
     def soft_delete_selected(self, request, queryset):
         queryset.update(deleted_at=timezone.now())
-
     soft_delete_selected.short_description = "Soft delete selected conversations"
 
     def get_action_choices(self, request, **kwargs):
@@ -76,7 +109,6 @@ class ConversationAdmin(NestedModelAdmin):
 
     def is_deleted(self, obj):
         return obj.deleted_at is not None
-
     is_deleted.boolean = True
     is_deleted.short_description = "Deleted?"
 
@@ -86,7 +118,14 @@ class VersionAdmin(NestedModelAdmin):
     list_display = ("id", "conversation", "parent_version", "root_message")
 
 
+class FileUploadAdmin(admin.ModelAdmin): #remove the file_hash filed in upload file page
+    readonly_fields = ('file_hash', 'uploaded_at')
+    fields = ('file', 'original_name')  # Hide file_hash
+
+
+
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(Conversation, ConversationAdmin)
 admin.site.register(Version, VersionAdmin)
+admin.site.register(FileUpload, FileUploadAdmin)

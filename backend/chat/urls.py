@@ -1,6 +1,10 @@
 from django.urls import path
 
 from chat import views
+from .views import ConversationSummaryListAPIView
+from .views import FileUploadView
+from .views import FileUploadListView
+from .views import FileUploadDeleteView
 
 urlpatterns = [
     path("", views.chat_root_view, name="chat_root_view"),
@@ -19,4 +23,13 @@ urlpatterns = [
     ),
     path("conversations/<uuid:pk>/delete/", views.conversation_soft_delete, name="conversation_delete"),
     path("versions/<uuid:pk>/add_message/", views.version_add_message, name="version_add_message"),
+    
+    path('conversation-summaries/', ConversationSummaryListAPIView.as_view(), name='conversation-summaries'),
+    path('upload/', FileUploadView.as_view(), name='file-upload'),
+    path('upload/', FileUploadView.as_view(), name='file-upload'),
+    path('files/', FileUploadListView.as_view(), name='file-list'),
+    path('upload/', FileUploadView.as_view(), name='file-upload'),
+    path('files/', FileUploadListView.as_view(), name='file-list'),
+    path('files/<int:id>/delete/', FileUploadDeleteView.as_view(), name='file-delete'),
 ]
+
