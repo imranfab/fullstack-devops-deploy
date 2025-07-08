@@ -8,6 +8,9 @@ import openai
 def generate_summary(sender, instance, created, **kwargs):
     if created or not instance.summary:
         messages = Message.objects.filter(conversation=instance).order_by('created_at')
+        # new one
+        # messages = Message.objects.filter(version__conversation=instance).order_by('created_at')
+
         text = "\n".join([msg.content for msg in messages])
 
         if text.strip():

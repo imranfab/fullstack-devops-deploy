@@ -51,8 +51,15 @@ INSTALLED_APPS = [
     "authentication",
     "chat",
     "gpt",
+    # task3
+    'django_filters',  
 ]
-
+# task 3
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -164,3 +171,15 @@ CELERY_TASK_SERIALIZER = 'json'
 
 # CELERY BEAT SETTINGS
 INSTALLED_APPS += ['django_celery_beat']
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': { 'class': 'logging.StreamHandler' },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
