@@ -4,7 +4,35 @@ from nested_admin.nested import NestedModelAdmin, NestedStackedInline, NestedTab
 
 from chat.models import Conversation, Message, Role, Version
 
+#task 3.2
+from .models import FileUpload
+from django import forms
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 
+# Custom form to show only user and file (hide hash/size in input)
+class FileUploadForm(forms.ModelForm):
+    class Meta:
+        model = FileUpload
+        fields = ['user', 'file']  # only show user and file fields
+@admin.register(FileUpload)
+class FileUploadAdmin(admin.ModelAdmin):
+    form = FileUploadForm
+    list_display = ("id", "file_name", "file_size", "file_hash", "uploaded_at", "user")
+    readonly_fields = ("file_name", "file_size", "file_hash", "uploaded_at")
+
+    def save_model(self, request, obj, form, change):
+        try:
+            obj.save()  # Triggers full_clean() with validation
+            self.message_user(request, "File uploaded successfully.", level=messages.SUCCESS)
+        except ValidationError as e:
+            self.message_user(
+                request,
+                f"Upload failed: {e.messages[0]}",
+                level=messages.WARNING
+            )
+
+# task3.2 end--
 class RoleAdmin(NestedModelAdmin):
     list_display = ["id", "name"]
 
