@@ -20,7 +20,7 @@ class MessageAdmin(NestedModelAdmin):
 
 class MessageInline(NestedTabularInline):
     model = Message
-    extra = 2  # number of extra forms to display
+    extra = 2
 
 
 class VersionInline(NestedStackedInline):
@@ -51,7 +51,17 @@ class DeletedListFilter(admin.SimpleListFilter):
 class ConversationAdmin(NestedModelAdmin):
     actions = ["undelete_selected", "soft_delete_selected"]
     inlines = [VersionInline]
-    list_display = ("title", "id", "created_at", "modified_at", "deleted_at", "version_count", "is_deleted", "user")
+    list_display = (
+        "title",
+        "id",
+        "created_at",
+        "modified_at",
+        "deleted_at",
+        "version_count",
+        "is_deleted",
+        "user",
+        "summary",  # 🔥 Show summary in admin
+    )
     list_filter = (DeletedListFilter,)
     ordering = ("-modified_at",)
 
@@ -68,10 +78,8 @@ class ConversationAdmin(NestedModelAdmin):
     def get_action_choices(self, request, **kwargs):
         choices = super().get_action_choices(request)
         for idx, choice in enumerate(choices):
-            fn_name = choice[0]
-            if fn_name == "delete_selected":
-                new_choice = (fn_name, "Hard delete selected conversations")
-                choices[idx] = new_choice
+            if choice[0] == "delete_selected":
+                choices[idx] = (choice[0], "Hard delete selected conversations")
         return choices
 
     def is_deleted(self, obj):
