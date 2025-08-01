@@ -68,9 +68,10 @@ def register_view(request):
     if CustomUser.objects.filter(email=email).exists():
         return JsonResponse({"error": "Email is already taken"}, status=status.HTTP_400_BAD_REQUEST)
 
-    CustomUser.objects.create_user(email, password=password)
+    user = CustomUser.objects.create_user(email, password=password)
+    user.is_active = True  # Set is_active to True
+    user.save()
     return JsonResponse({"data": "User created successfully"}, status=status.HTTP_201_CREATED)
-
 
 @api_view(["GET"])
 def verify_session(request):

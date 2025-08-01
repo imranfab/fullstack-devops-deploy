@@ -5,16 +5,18 @@ from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework.decorators import api_view
 
-
+# Simple root endpoint to verify the app is running
 @api_view(["GET"])
 def root_view(request):
     return JsonResponse({"message": "App works!"})
 
-
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("chat/", include("chat.urls")),
-    path("gpt/", include("gpt.urls")),
-    path("auth/", include("authentication.urls")),
-    path("", root_view),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path("admin/", admin.site.urls),  # Admin site
+    path("chat/", include("chat.urls")),  # Chat app URLs
+    path("gpt/", include("gpt.urls")),  # GPT app URLs
+    path("auth/", include("authentication.urls")),  # Authentication URLs
+    path("", root_view),  # Root endpoint
+]
+
+# Serve static files during development
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

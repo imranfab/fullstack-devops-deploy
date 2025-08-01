@@ -1,0 +1,11 @@
+Django>=3.2,<4.0
+djangorestframework
+transformers
+torch
+chromadb==0.4.22
+python-dotenv
+django core-headers
+psycopg2-binary
+django-celery-beat
+
+

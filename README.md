@@ -27,7 +27,7 @@ Welcome, candidates! This project is a custom-built chatbot application that mim
 - Deletion of conversations.
 - Assistant message regeneration.
 - User message editing.
-- Model selection: currently GPT-3.5 or GPT-4.
+- Model selection: currently GPT-3.5 or GPT-4. or Gemini
 - Custom Django admin page for managing conversations, versions, and messages.
 
 ## Images

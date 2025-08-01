@@ -1,32 +1,31 @@
 from django.contrib import admin
 from django.utils import timezone
 from nested_admin.nested import NestedModelAdmin, NestedStackedInline, NestedTabularInline
-
 from chat.models import Conversation, Message, Role, Version
 
 
 class RoleAdmin(NestedModelAdmin):
-    list_display = ["id", "name"]
+    list_display = ["id", "name"]  # Show role ID and name
 
 
 class MessageAdmin(NestedModelAdmin):
-    list_display = ["display_desc", "role", "id", "created_at", "version"]
+    list_display = ["display_desc", "role", "id", "created_at", "version"]  # Display key fields
 
     def display_desc(self, obj):
-        return obj.content[:20] + "..."
+        return obj.content[:20] + "..."  # Short preview of message content
 
     display_desc.short_description = "content"
 
 
 class MessageInline(NestedTabularInline):
     model = Message
-    extra = 2  # number of extra forms to display
+    extra = 2  # Show 2 empty forms by default
 
 
 class VersionInline(NestedStackedInline):
     model = Version
     extra = 1
-    inlines = [MessageInline]
+    inlines = [MessageInline]  # Nested messages inside versions
 
 
 class DeletedListFilter(admin.SimpleListFilter):
@@ -34,48 +33,54 @@ class DeletedListFilter(admin.SimpleListFilter):
     parameter_name = "deleted"
 
     def lookups(self, request, model_admin):
-        return (
-            ("True", "Yes"),
-            ("False", "No"),
-        )
+        return (("True", "Yes"), ("False", "No"))
 
     def queryset(self, request, queryset):
         value = self.value()
         if value == "True":
-            return queryset.filter(deleted_at__isnull=False)
+            return queryset.filter(deleted_at__isnull=False)  # Show deleted
         elif value == "False":
-            return queryset.filter(deleted_at__isnull=True)
+            return queryset.filter(deleted_at__isnull=True)  # Show not deleted
         return queryset
 
 
 class ConversationAdmin(NestedModelAdmin):
     actions = ["undelete_selected", "soft_delete_selected"]
     inlines = [VersionInline]
-    list_display = ("title", "id", "created_at", "modified_at", "deleted_at", "version_count", "is_deleted", "user")
+    list_display = (
+        "title",
+        "id",
+        "created_at",
+        "modified_at",
+        "deleted_at",
+        "version_count",
+        "is_deleted",
+        "user",
+        "summary",  # Show summary field
+    )
     list_filter = (DeletedListFilter,)
     ordering = ("-modified_at",)
+    readonly_fields = ("summary", "created_at", "modified_at", "deleted_at")  # Prevent editing these
 
     def undelete_selected(self, request, queryset):
-        queryset.update(deleted_at=None)
+        queryset.update(deleted_at=None)  # Undo soft-delete
 
     undelete_selected.short_description = "Undelete selected conversations"
 
     def soft_delete_selected(self, request, queryset):
-        queryset.update(deleted_at=timezone.now())
+        queryset.update(deleted_at=timezone.now())  # Soft-delete by timestamp
 
     soft_delete_selected.short_description = "Soft delete selected conversations"
 
     def get_action_choices(self, request, **kwargs):
         choices = super().get_action_choices(request)
         for idx, choice in enumerate(choices):
-            fn_name = choice[0]
-            if fn_name == "delete_selected":
-                new_choice = (fn_name, "Hard delete selected conversations")
-                choices[idx] = new_choice
+            if choice[0] == "delete_selected":
+                choices[idx] = (choice[0], "Hard delete selected conversations")  # Rename action
         return choices
 
     def is_deleted(self, obj):
-        return obj.deleted_at is not None
+        return obj.deleted_at is not None  # Boolean flag for deleted
 
     is_deleted.boolean = True
     is_deleted.short_description = "Deleted?"
@@ -83,9 +88,10 @@ class ConversationAdmin(NestedModelAdmin):
 
 class VersionAdmin(NestedModelAdmin):
     inlines = [MessageInline]
-    list_display = ("id", "conversation", "parent_version", "root_message")
+    list_display = ("id", "conversation", "parent_version", "root_message")  # Key fields
 
 
+# Register models with admin site
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(Conversation, ConversationAdmin)

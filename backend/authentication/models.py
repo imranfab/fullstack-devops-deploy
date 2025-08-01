@@ -1,6 +1,12 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
+class Role(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password, **extra_fields):
@@ -31,6 +37,8 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
+    role = models.ForeignKey(Role, null=True, blank=True, on_delete=models.SET_NULL)
+
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 
