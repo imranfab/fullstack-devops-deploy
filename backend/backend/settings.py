@@ -15,6 +15,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from celery.schedules import crontab
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -47,6 +49,7 @@ INSTALLED_APPS = [
     "authentication",
     "chat",
     "gpt",
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
@@ -86,9 +89,21 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB"),
+        "USER": os.environ.get("POSTGRES_USER"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "HOST": os.environ.get("POSTGRES_HOST", "127.0.0.1"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
+}
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-every-day': {
+        'task': 'chat.tasks.cleanup_old_conversations_task',
+        'schedule': crontab(hour=0, minute=0),  # every day at midnight
+    },
 }
 
 # Password validation
@@ -138,14 +153,18 @@ STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [
-    FRONTEND_URL,
+    "http://localhost:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    FRONTEND_URL,
+    "http://localhost:3000",
 ]
 
-SESSION_COOKIE_SECURE = True
+CORNJOBS = [
+    ('0 0 * * *', 'django.core.management.call_command', ['cleanup_conversations']),
+]
+
+SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = 'Lax'
