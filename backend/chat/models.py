@@ -22,6 +22,8 @@ class Conversation(models.Model):
     )
     deleted_at = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, blank=False, null=False, default="active")
+    summary = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -58,8 +60,12 @@ class Message(models.Model):
         ordering = ["created_at"]
 
     def save(self, *args, **kwargs):
-        self.version.conversation.save()
         super().save(*args, **kwargs)
+
+        messages = self.version.messages.all()
+        summary_text = "".join([message.content for message in messages])[:200]
+        self.version.conversation.summary = summary_text
+        self.version.conversation.save()
 
     def __str__(self):
         return f"{self.role}: {self.content[:20]}..."
