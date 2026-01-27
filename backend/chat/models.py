@@ -15,6 +15,7 @@ class Role(models.Model):
 class Conversation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100, blank=False, null=False, default="Mock title")
+    summary = models.TextField(blank=True, null=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     active_version = models.ForeignKey(
@@ -30,6 +31,20 @@ class Conversation(models.Model):
         return self.versions.count()
 
     version_count.short_description = "Number of versions"
+
+    #Generate_summary
+    def generate_summary(self):
+        if not self.active_version:
+            return ""
+
+        messages = self.active_version.messages.all()
+        full_text = " ".join(message.content for message in messages)
+
+        return full_text[:200] + "..." if len(full_text) > 200 else full_text
+
+    def save(self, *args, **kwargs):
+        self.summary = self.generate_summary()
+        super().save(*args, **kwargs)
 
 
 class Version(models.Model):
