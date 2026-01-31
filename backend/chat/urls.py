@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path,include
 
 from chat import views
 
@@ -19,4 +19,16 @@ urlpatterns = [
     ),
     path("conversations/<uuid:pk>/delete/", views.conversation_soft_delete, name="conversation_delete"),
     path("versions/<uuid:pk>/add_message/", views.version_add_message, name="version_add_message"),
+    # NEW: Task 3 endpoints
+    # Endpoint 8: Conversation summaries with pagination and filtering
+    path("summaries/", views.get_conversation_summaries, name="get_conversation_summaries"),
+    # Endpoint 9: File upload with duplicate detection
+    path("files/upload/", views.upload_file, name="upload_file"),
+    # Endpoint 10: List uploaded files with metadata
+    path("files/", views.list_uploaded_files, name="list_uploaded_files"),
+    # Get specific file details
+    path("files/<uuid:pk>/", views.get_uploaded_file, name="get_uploaded_file"),
+    # Endpoint 11: Delete uploaded file
+    path("files/<uuid:pk>/delete/", views.delete_uploaded_file, name="delete_uploaded_file"),
+
 ]
