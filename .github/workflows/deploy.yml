@@ -10,19 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup SSH Key
+      - name: Create SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > key.pem
+          echo "${{ secrets.EC2_KEY }}" | base64 -d > key.pem
           chmod 600 key.pem
 
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          cd ~/fullstack-devops-deploy
+          cd ~/fullstack-assignment
           git pull origin main
-          docker-compose down
-          docker-compose up -d --build
+          docker compose down
+          docker compose up -d --build
           EOF
